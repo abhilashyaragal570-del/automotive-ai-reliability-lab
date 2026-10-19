@@ -9,9 +9,7 @@ makes no safety or certification claims.
 
 ## Status
 
-Phase 1 (environment and perception) is in progress. There are no accuracy
-metrics yet: no labelled dataset is part of the pipeline. Phase 2 adds ground
-truth, precision, recall and mAP.
+Phase 1 (environment and perception) is done. Phase 2 (evaluation on labelled data) is in progress: it uses BDD100K ground truth to measure recall and false positives for cars, day versus night, in three YOLO models, and latency is measured in [docs/latency.md](docs/latency.md). See [docs/findings_night_recall.md](docs/findings_night_recall.md). The Phase 1 clip below has no ground truth, so its numbers are detection counts only. Precision over the whole label set and mAP are not computed yet.
 
 ## Setup (Windows, PowerShell)
 
