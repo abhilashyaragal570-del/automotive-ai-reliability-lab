@@ -1,9 +1,9 @@
 ﻿# Findings: small YOLO models lose recall at night on BDD100K
 
-Status: Day 2, Phase 2. Two small COCO-pretrained models and one dataset sample. This is a measured baseline, not a general claim about YOLO.
+Status: Day 2, Phase 2. Four COCO-pretrained models (n and s sizes of two families) and one dataset sample. This is a measured baseline, not a general claim about YOLO.
 
 ## Setup
-- Models: yolo26n.pt and yolov8n.pt (Ultralytics, no fine-tuning).
+- Models: yolo26n.pt, yolo26s.pt, yolov8n.pt, yolov8s.pt (Ultralytics, no fine-tuning). Sections 1 to 8 use the n models unless stated.
 - Data: BDD100K images with time-of-day, weather and scene tags (data/bdd100k/samples.json).
 - Classes compared: car, truck, bus, bicycle, motorcycle, person (BDD pedestrian and rider), traffic light. Labeled objects shorter than 20 px are ignored.
 - A detection is a hit if the class matches and IoU >= 0.5 (greedy, highest confidence first). Default confidence threshold 0.25.
@@ -115,5 +115,23 @@ Large cars (80+ px), hit rate by mean gray level inside the label box.
 - Why night cars at matched brightness are harder (blur and contrast are untested).
 - Whether night labels are looser than daytime labels (no daytime crops compared yet).
 - Rain at night versus clear at night.
-- Anything about larger models, other datasets or fine-tuned models.
+- Anything about models larger than the s variants, other datasets or fine-tuned models.
 - Results for yolov8n at other confidence thresholds or IoU thresholds.
+
+
+## 9. Larger models (s variants) do not close the gap
+Crossed slices, same 1,332 images, conf 0.25.
+
+| Model | day recall | night recall | gap (points) | night / day | day precision | night precision |
+|---|---|---|---|---|---|---|
+| yolo26n | 0.46 | 0.27 | -19 | 0.59 | 0.78 | 0.73 |
+| yolo26s | 0.59 | 0.39 | -20 | 0.66 | 0.76 | 0.67 |
+| yolov8n | 0.49 | 0.29 | -20 | 0.60 | 0.74 | 0.66 |
+| yolov8s | 0.59 | 0.39 | -19 | 0.67 | 0.74 | 0.68 |
+
+- Recall rises by about 12 to 13 points in both slices from n to s. The point gap stays at 19 to 20; the night/day ratio improves from about 0.60 to about 0.66.
+- With weather held fixed, night is 17 to 21 points below daytime in both s models (yolo26s: clear -18, rainy -21, snowy -21; yolov8s: clear -17, rainy -21, snowy -20).
+- Night+rainy is 3 to 5 points below night+clear in all four models. All four models see the same images, so this is one sample, not four confirmations. Not established.
+- Per-class night recall (day to night): car 0.68 to 0.44 (yolo26s) and 0.68 to 0.45 (yolov8s); traffic light 0.35 to 0.20 in both; person 0.46 to 0.31 and 0.43 to 0.31; truck 0.50 to 0.27 and 0.47 to 0.20.
+- The s models detect more night traffic lights than the n models at conf 0.25 (0.20 vs 0.06 for yolo26n), with about 350 to 390 false alarms.
+- At conf 0.25 the s models are not more precise than the n models (yolo26s: 0.76 day, 0.67 night), so these are different operating points. A matched-precision comparison (as in section 2) has not been done for the s models.
