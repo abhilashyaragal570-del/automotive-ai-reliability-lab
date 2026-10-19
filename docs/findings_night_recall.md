@@ -180,3 +180,21 @@ Cars only, recall day to night by labeled box height:
 - yolov8s large-car gap (-10) is consistent with yolo26s (-11). A brightness-matched comparison for yolov8s has not been run.
 
 Not established: why small objects at night are so hard, and whether brightness mix explains the small and medium gaps (section 10 covers large cars only).
+
+## 12. Brightness matching by size band (cars)
+600 images (300 per time of day), conf 0.25, cars only. Brightness is the mean gray level inside the label box. The matched gap is the night hit rate reweighted to the daytime brightness mix, using only brightness bins with 30+ cars on both sides.
+
+| Size band | night cars below gray 30 | night cars covered | yolo26n gap (unmatched) | yolo26s gap (unmatched) | yolov8s gap (unmatched) |
+|---|---|---|---|---|---|
+| 20-40 px | 18% | 82% | -22 (-21) | -30 (-31) | -34 (-33) |
+| 40-80 px | 30% | 70% | -25 (-30) | -22 (-29) | -23 (-27) |
+| 80px+ | 39% | 61% | -8 (-19) | -1 (-11) | -4 (-10) |
+
+- Brightness matching removes most of the large-car gap but little of the small and medium gaps. This holds for all three models.
+- For small cars the gap does not shrink in brighter bins. yolo26n: -15, -21, -23 (30-50, 50-80, 80+). yolo26s: -27, -33, -28. yolov8s: -31, -32, -36. In the 80+ bin, night hit rates are 5%, 15% and 9% against 28%, 43% and 45% by day.
+- Medium-car gaps vary by bin (-18 to -41) with no clean slope.
+- Small night cars are not concentrated in the darkest bin (18% below gray 30), so the small-car gap is not an artifact of unmatchable dark cars.
+- yolov8s agrees with yolo26s on large cars (-4 vs -1 matched; -10 vs -11 unmatched).
+- Cells of about 60 cars have a standard error of about 6 points; the band-level gaps are far larger. Images are shared across models and objects cluster within images, so the real uncertainty is somewhat wider.
+
+Not established: what causes the small and medium gaps, and whether they depend on the confidence threshold. Mean gray inside a small box is noisy.
