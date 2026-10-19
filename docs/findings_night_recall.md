@@ -198,3 +198,24 @@ Not established: why small objects at night are so hard, and whether brightness 
 - Cells of about 60 cars have a standard error of about 6 points; the band-level gaps are far larger. Images are shared across models and objects cluster within images, so the real uncertainty is somewhat wider.
 
 Not established: what causes the small and medium gaps, and whether they depend on the confidence threshold. Mean gray inside a small box is noisy.
+
+## 13. Confidence threshold sweep (yolo26s, cars)
+600 images (300 per time of day), cars only, labeled box height 20+ px. Same images and labels at every threshold.
+
+| Size band | conf 0.25 day / night | conf 0.10 day / night | conf 0.05 day / night |
+|---|---|---|---|
+| 20-40 px | 46 / 15 | 59 / 33 | 65 / 45 |
+| 40-80 px | 76 / 47 | 84 / 66 | 89 / 75 |
+| 80px+ | 90 / 80 | 91 / 88 | 92 / 91 |
+
+- Day-night gap (all cars, points): small -31, -26, -20; medium -29, -18, -14; large -11, -4, -1 (conf 0.25, 0.10, 0.05).
+- Brightness-matched gap (points): small -30, -25, -18; medium -22, -13, -11; large -1, +2, +3.
+- Night / day recall ratio (rounded rates): small 0.33, 0.56, 0.69; medium 0.62, 0.79, 0.84; large 0.89, 0.97, 0.99.
+- Night recall rises more than day recall in every band when the threshold falls. For small cars night goes 15 to 45 (+30) and day 46 to 65 (+19).
+- At conf 0.25 about 85% of small night cars are missed; at 0.05 about 55%. The s-model gap in sections 9 and 11 therefore depends on the operating point.
+- For small cars the gap shrinks in brighter bins at conf 0.05 (-27, -21, -16 for 30-50, 50-80, 80+) but not at conf 0.25 (-27, -33, -28). Cells of about 60 cars have a standard error of about 6 points.
+- Night cars with label gray below 30 in the 80px+ band reach an 87% hit rate at conf 0.05 (69% at 0.25). Only 3 daytime cars are that dark, so there is no comparison.
+
+This is recall only. False positives are not counted, so a higher hit rate at low confidence is not a better detector.
+
+Not established: the precision cost of low thresholds, and whether yolo26n and yolov8s show the same pattern.
