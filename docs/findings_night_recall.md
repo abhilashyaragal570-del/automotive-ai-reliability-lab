@@ -135,3 +135,27 @@ Crossed slices, same 1,332 images, conf 0.25.
 - Per-class night recall (day to night): car 0.68 to 0.44 (yolo26s) and 0.68 to 0.45 (yolov8s); traffic light 0.35 to 0.20 in both; person 0.46 to 0.31 and 0.43 to 0.31; truck 0.50 to 0.27 and 0.47 to 0.20.
 - The s models detect more night traffic lights than the n models at conf 0.25 (0.20 vs 0.06 for yolo26n), with about 350 to 390 false alarms.
 - At conf 0.25 the s models are not more precise than the n models (yolo26s: 0.76 day, 0.67 night), so these are different operating points. A matched-precision comparison (as in section 2) has not been done for the s models.
+
+## 10. Large cars: brightness-matched comparison (yolo26n and yolo26s)
+Large cars (80+ px), 600 images (300 per time of day), conf 0.25. Brightness is the mean gray level inside the label box.
+
+| Brightness | cars day / night | median gray day / night | yolo26n hit day / night | yolo26s hit day / night |
+|---|---|---|---|---|
+| <30 | 3 / 224 | 28 / 18 | n/a / 57% | n/a / 69% |
+| 30-50 | 70 / 152 | 44 / 39 | 94% / 67% | 97% / 82% |
+| 50-80 | 275 / 120 | 65 / 63 | 89% / 78% | 92% / 89% |
+| 80+ | 324 / 78 | 101 / 100 | 84% / 83% | 88% / 92% |
+| all | 672 / 574 | | 87% / 68% | 90% / 80% |
+
+- The day-night gap shrinks as the label region gets brighter: -27, -11 and -1 points for yolo26n, and -15, -3 and +4 for yolo26s (30-50, 50-80, 80+). The 80+ night cell has 78 cars (standard error about 4 points).
+- Reweighting night hit rates to the daytime brightness mix gives about 79% for yolo26n (87% by day) and about 89.5% for yolo26s (90% by day). These are rough and rely on the night hit rate in the 80+ bin. Brightness mix therefore explains nearly all of yolo26s's large-car gap and about 11 of yolo26n's 19 points.
+- Large-car gap overall: -19 points for yolo26n, -11 for yolo26s. The overall all-object gap stays at about 20 points for the s models (section 9), so the all-object gap and the large-car gap differ for the s models.
+- 39% of large night cars (224 of 574) have a label box darker than 30 mean gray, and only 3 daytime cars are that dark, so nothing can be said about how a daytime car that dark would do.
+- Daytime hit rate for yolo26n is not monotonic in brightness (94% at 30-50, 84% at 80+). Not investigated.
+
+Sharpness proxy: raw variance of the Laplacian of the label crop resized to 64x64. A first version normalized by brightness was discarded because it tracked brightness (night scored sharper than day).
+- Median proxy value is slightly lower at night than by day within each brightness bin (871 vs 903, 1181 vs 1237, 1406 vs 1608).
+- Inside the 50-80 bin the day-night gap does not shrink in the sharper terciles (yolo26n: -8, -11, -14; yolo26s: -4, -3, -2). Cells hold about 40 night cars, so these differences are within noise. Most cells in the 30-50 and 80+ bins have fewer than 30 night cars and are not reported.
+- The proxy mixes blur, noise and texture. It shows no sign that sharpness explains the remaining gap. It does not rule blur out.
+
+Not established: what causes the remaining yolo26n gap at matched brightness (about 8 points), and whether yolov8s behaves like yolo26s on large cars.
