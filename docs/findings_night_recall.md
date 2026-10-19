@@ -219,3 +219,27 @@ Not established: what causes the small and medium gaps, and whether they depend 
 This is recall only. False positives are not counted, so a higher hit rate at low confidence is not a better detector.
 
 Not established: the precision cost of low thresholds, and whether yolo26n and yolov8s show the same pattern.
+
+## 14. Recall versus false positives (cars)
+600 images (300 per time of day), cars only. A false positive (FP) is a predicted car (20+ px) that matches no labeled car at IoU 0.5. Labels are incomplete, so FP include unlabeled cars and duplicate boxes; read day against night, not absolute values. Recall is over all labeled cars of 20+ px (2446 day, 2153 night).
+
+| Model | conf | recall day / night | gap | FP per image day / night | precision day / night |
+|---|---|---|---|---|---|
+| yolo26s | 0.50 | 52 / 27 | -25 | 0.27 / 0.13 | 94 / 94 |
+| yolo26s | 0.40 | 59 / 33 | -26 | 0.51 / 0.34 | 90 / 87 |
+| yolo26s | 0.25 | 67 / 43 | -24 | 1.15 / 1.05 | 83 / 74 |
+| yolo26s | 0.10 | 76 / 59 | -17 | 3.44 / 4.35 | 64 / 49 |
+| yolo26s | 0.05 | 80 / 67 | -13 | 6.01 / 8.71 | 52 / 36 |
+| yolov8s | 0.25 | 68 / 44 | -24 | 1.40 / 0.96 | 80 / 77 |
+| yolov8s | 0.05 | 80 / 67 | -13 | 7.34 / 9.44 | 47 / 34 |
+| yolo26n | 0.25 | 55 / 32 | -23 | 0.90 / 0.67 | 83 / 77 |
+| yolo26n | 0.05 | 74 / 61 | -13 | 7.95 / 10.70 | 43 / 29 |
+
+- Recall at the shared thresholds reproduces the earlier size and sweep runs (yolo26s, yolo26n, yolov8s).
+- In all three models the all-car gap narrows from about -24 (conf 0.25) to -13 (conf 0.05).
+- yolo26s, 0.25 to 0.05: night gains 532 hits from 2830 extra boxes (19%); day gains 315 hits from 1774 extra boxes (18%).
+- At conf 0.25, day and night FP per image are about equal (1.15 vs 1.05) and the gap is -24. Night at conf 0.10 has 4.35 FP per image (59% recall); day at about 4.35 FP per image is roughly 77% by interpolation, so the gap at equal FP rate is about -18. This is an interpolation.
+- At conf 0.05 night has more FP per image than day, mostly in medium (3.24 vs 1.79) and large (1.76 vs 1.17) predicted boxes; small boxes differ less (3.71 vs 3.05). Cause not investigated.
+- At conf 0.50 night and day precision are equal (94%).
+
+Not established: how many FP are unlabeled real cars, duplicates or non-cars, and whether the night excess differs from day in kind.
