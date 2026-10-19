@@ -1,4 +1,6 @@
-﻿## Summary
+﻿# Findings: small YOLO models lose recall at night on BDD100K
+
+## Summary
 
 Question: why do YOLO detectors miss more cars at night on BDD100K? Setup: 600 images (300 day, 300 night), cars only, labeled boxes 20+ px, models yolo26n, yolo26s and yolov8s (yolov8s only in some tables), IoU 0.5.
 
@@ -10,7 +12,6 @@ Question: why do YOLO detectors miss more cars at night on BDD100K? Setup: 600 i
 - That recall is not free. At conf 0.05 yolo26s has 8.71 FP per image at night against 6.01 by day, and precision of 36% against 52%. At equal FP rate the gap is roughly -18 by interpolation, so about half of the narrowing looks like real detection. At conf 0.50 and above, night and day precision are equal (94%).
 
 Caveats: images are shared across models and objects cluster within images, so real uncertainty is wider than the simple estimates. BDD labels are incomplete, so FP are overstated and include unlabeled cars and duplicate boxes. Not established: what causes the small-car gap, what the night false positives are, and anything about models larger than s.
-# Findings: small YOLO models lose recall at night on BDD100K
 
 Status: Day 2, Phase 2. Four COCO-pretrained models (n and s sizes of two families) and one dataset sample. This is a measured baseline, not a general claim about YOLO.
 
