@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import cv2
+import torch
 from ultralytics import YOLO
 
 # Paths are built from this file's location, so the script works from any folder.
@@ -13,6 +14,7 @@ OUTPUT_PATH = PROJECT_ROOT / "experiments" / "results" / "bus_annotated.jpg"
 
 MODEL_NAME = "yolo26n.pt"   # nano model: smallest and fastest
 CONF_THRESHOLD = 0.25       # discard detections below this confidence
+DEVICE = 0 if torch.cuda.is_available() else "cpu"   # GPU 0 if present, else CPU
 
 
 def main() -> None:
@@ -21,10 +23,11 @@ def main() -> None:
         sys.exit(1)
 
     model = YOLO(MODEL_NAME)
-    results = model.predict(source=str(IMAGE_PATH), conf=CONF_THRESHOLD, device="cpu", verbose=False)
+    results = model.predict(source=str(IMAGE_PATH), conf=CONF_THRESHOLD, device=DEVICE, verbose=False)
     result = results[0]
 
-    print(f"Model: {MODEL_NAME} | confidence threshold: {CONF_THRESHOLD}")
+    device_label = torch.cuda.get_device_name(0) if DEVICE == 0 else "CPU"
+    print(f"Model: {MODEL_NAME} | confidence threshold: {CONF_THRESHOLD} | device: {device_label}")
     print(f"Detections found: {len(result.boxes)}")
 
     for box in result.boxes:
