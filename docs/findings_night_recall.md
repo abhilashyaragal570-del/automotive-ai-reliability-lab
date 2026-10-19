@@ -159,3 +159,24 @@ Sharpness proxy: raw variance of the Laplacian of the label crop resized to 64x6
 - The proxy mixes blur, noise and texture. It shows no sign that sharpness explains the remaining gap. It does not rule blur out.
 
 Not established: what causes the remaining yolo26n gap at matched brightness (about 8 points), and whether yolov8s behaves like yolo26s on large cars.
+
+## 11. Where the s-model gap lives: object size
+600 images (300 per time of day), conf 0.25. Median labeled box height is 44 px by day and 45 px by night in every run.
+
+Cars only, recall day to night by labeled box height:
+
+| Box height | cars day / night | yolo26n | yolo26s | yolov8n | yolov8s |
+|---|---|---|---|---|---|
+| 20-40 px | 1026 / 867 | 0.29 to 0.08 | 0.46 to 0.15 | 0.32 to 0.06 | 0.46 to 0.14 |
+| 40-80 px | 748 / 712 | 0.63 to 0.33 | 0.76 to 0.47 | 0.68 to 0.34 | 0.77 to 0.50 |
+| 80+ px | 672 / 574 | 0.87 to 0.68 | 0.90 to 0.80 | 0.87 to 0.71 | 0.91 to 0.81 |
+
+- Day-night gap in points (cars, small / medium / large): yolo26n -21 / -30 / -19, yolo26s -31 / -29 / -11, yolov8n -26 / -34 / -16, yolov8s -33 / -27 / -10.
+- All classes, s models (day to night): yolo26s 0.36 to 0.14, 0.68 to 0.42, 0.88 to 0.77; yolov8s 0.35 to 0.12, 0.68 to 0.44, 0.87 to 0.77 (gaps -23 / -27 / -11 and -23 / -25 / -10).
+- Moving from n to s shrinks the large-object gap (about -16 to -19 down to -10 to -11 for cars) but not the small or medium gaps. Small-car gaps widen (-21 and -26 to -31 and -33), because daytime recall rose 17 points for yolo26n to yolo26s (0.29 to 0.46) while night rose 7 (0.08 to 0.15).
+- Size mix is about 44 / 31 / 25 percent by day and 44 / 32 / 24 at night, so the overall gap is roughly a weighted average of the band gaps (about 21 points for yolo26s, all classes). The s models' gain on large objects is offset by wider small-object gaps, which is why the overall gap stays near 20 points (section 9).
+- The pattern also appears for cars alone, so it is not a class-mix effect.
+- The s models still miss about 85% of 20-40 px cars at night.
+- yolov8s large-car gap (-10) is consistent with yolo26s (-11). A brightness-matched comparison for yolov8s has not been run.
+
+Not established: why small objects at night are so hard, and whether brightness mix explains the small and medium gaps (section 10 covers large cars only).
