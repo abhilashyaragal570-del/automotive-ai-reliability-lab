@@ -6,3 +6,4 @@ runs/
 experiments/results/suspect/
 data/samples/
 experiments/results/
+data/bdd100k/
