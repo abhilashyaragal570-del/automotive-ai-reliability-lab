@@ -264,7 +264,7 @@ Manual review of random false positives of 40+ px (sorted by eye as A real unlab
 
 - Five of 20 daytime crops and one of 22 night crops are the filming car's own hood, boxed as a car with no label.
 - The night excess of false positives is mostly poor-overlap boxes on cars that already have labels, so part of the low-confidence night precision penalty comes from IoU 0.5 matching, not from invented cars.
-- Dark crops are hard to judge; some B calls at night could be unlabeled cars. Crops were sorted by one person with the box category hidden, but 20 to 22 crops per side give roughly +/-15 points.
-- Several crops were counted by the reviewer from a partial set (daytime_10, 11, 22, 23, 24 and night_00, 01 were not reviewed).
+- Dark crops are hard to judge; some B calls at night could be unlabeled cars. Crops were sorted by eye from the saved images without looking at the automatic category, but 20 to 22 crops per side give roughly +/-15 points.
+- Seven of the 50 crops were not reviewed (daytime_10, 11, 22, 23, 24 and night_00, 01).
 
 Not established: the share of hood boxes among all large false positives, and whether the night B boxes would match at a looser IoU.
