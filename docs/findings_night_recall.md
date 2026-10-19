@@ -1,4 +1,16 @@
-﻿# Findings: small YOLO models lose recall at night on BDD100K
+﻿## Summary
+
+Question: why do YOLO detectors miss more cars at night on BDD100K? Setup: 600 images (300 day, 300 night), cars only, labeled boxes 20+ px, models yolo26n, yolo26s and yolov8s (yolov8s only in some tables), IoU 0.5.
+
+- At conf 0.25 the day/night recall gap for cars is about 24 points in all three models (yolo26n -23, yolo26s -24, yolov8s -24).
+- For large cars (80+ px), most of the gap is a brightness effect. Matched to the daytime brightness mix, the gap falls from -19 / -11 / -10 to -8 / -1 / -4 (yolo26n / yolo26s / yolov8s). This covers the 61% of night cars that have daytime counterparts; 39% are darker than anything in the daytime sample.
+- For small cars (20-40 px), brightness matching changes almost nothing (-22, -30, -34 matched). The cause is untested. Resolution, motion blur and label quality for tiny night cars are candidates.
+- A raw-detail (Laplacian) proxy shows no sign that blur explains the remaining gap, but it mixes blur, noise and texture and does not rule blur out.
+- The gap depends on the operating point. Lowering conf from 0.25 to 0.05 narrows the all-car gap to about -13 in all three models (yolo26s: small -31 to -20, medium -29 to -14, large -11 to -1).
+- That recall is not free. At conf 0.05 yolo26s has 8.71 FP per image at night against 6.01 by day, and precision of 36% against 52%. At equal FP rate the gap is roughly -18 by interpolation, so about half of the narrowing looks like real detection. At conf 0.50 and above, night and day precision are equal (94%).
+
+Caveats: images are shared across models and objects cluster within images, so real uncertainty is wider than the simple estimates. BDD labels are incomplete, so FP are overstated and include unlabeled cars and duplicate boxes. Not established: what causes the small-car gap, what the night false positives are, and anything about models larger than s.
+# Findings: small YOLO models lose recall at night on BDD100K
 
 Status: Day 2, Phase 2. Four COCO-pretrained models (n and s sizes of two families) and one dataset sample. This is a measured baseline, not a general claim about YOLO.
 
