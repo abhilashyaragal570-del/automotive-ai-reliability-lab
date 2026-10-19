@@ -2,3 +2,7 @@
 __pycache__/
 runs/
 *.pt
+*.mp4
+experiments/results/suspect/
+data/samples/
+experiments/results/
