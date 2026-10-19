@@ -1,0 +1,119 @@
+﻿# Findings: small YOLO models lose recall at night on BDD100K
+
+Status: Day 2, Phase 2. Two small COCO-pretrained models and one dataset sample. This is a measured baseline, not a general claim about YOLO.
+
+## Setup
+- Models: yolo26n.pt and yolov8n.pt (Ultralytics, no fine-tuning).
+- Data: BDD100K images with time-of-day, weather and scene tags (data/bdd100k/samples.json).
+- Classes compared: car, truck, bus, bicycle, motorcycle, person (BDD pedestrian and rider), traffic light. Labeled objects shorter than 20 px are ignored.
+- A detection is a hit if the class matches and IoU >= 0.5 (greedy, highest confidence first). Default confidence threshold 0.25.
+- Slices are sampled per cell with random seed 0. Both models see identical images, so agreement between them is not independent evidence.
+- Scripts in scripts/: compare_yolo_bdd.py (slices), compare_yolo_bdd_crossed.py (time of day x weather, per class, optional conf argument), compare_yolo_bdd_size.py, compare_yolo_bdd_misses.py, compare_yolo_bdd_iou.py, compare_yolo_bdd_bright.py, make_contact_sheet.py.
+- Result CSVs are written to experiments/results/ (git-ignored).
+
+## 1. Night recall is lower in every weather type
+Crossed slices, 1,332 images (150 sampled per cell), conf 0.25.
+
+| Slice | yolo26n recall | yolov8n recall | yolo26n precision | yolov8n precision |
+|---|---|---|---|---|
+| daytime | 0.46 | 0.49 | 0.78 | 0.74 |
+| night | 0.27 | 0.29 | 0.73 | 0.66 |
+| daytime+clear | 0.46 | 0.47 | 0.78 | 0.74 |
+| night+clear | 0.28 | 0.30 | 0.73 | 0.67 |
+| daytime+rainy | 0.45 | 0.47 | 0.77 | 0.73 |
+| night+rainy | 0.25 | 0.26 | 0.70 | 0.63 |
+| daytime+snowy | 0.46 | 0.48 | 0.80 | 0.74 |
+| night+snowy | 0.28 | 0.28 | 0.75 | 0.66 |
+| daytime+overcast | 0.49 | 0.52 | 0.78 | 0.75 |
+
+- night+overcast is excluded (only 18 images exist).
+- With weather held fixed, night is 17 to 21 recall points below daytime in both models.
+- Most BDD "clear" images are night images (night+clear pool 3,274), which is why plain "clear" looked worse than "overcast".
+- In daylight, clear, rainy and snowy are within about 1 point of each other. Overcast is 3 to 5 points higher, unexplained (possibly scene mix).
+- Rainy night is 3 to 4 points below clear night in both models. This is a hint only, not a finding.
+
+## 2. The gap depends on the confidence threshold, but never closes
+yolo26n, same 1,332 images.
+
+| conf | day recall | night recall | day precision | night precision |
+|---|---|---|---|---|
+| 0.10 | 0.59 | 0.44 | 0.53 | 0.40 |
+| 0.25 | 0.46 | 0.27 | 0.78 | 0.73 |
+| 0.50 | 0.30 | 0.15 | 0.92 | 0.92 |
+
+- At conf 0.50 both slices have precision 0.92, and night recall is exactly half of daytime.
+- Night detections are less confident, so a strict threshold penalizes night more.
+
+## 3. Per-class recall, day to night (conf 0.25)
+| Class | labeled day / night | yolo26n | yolov8n |
+|---|---|---|---|
+| car | 5742 / 4311 | 0.56 to 0.33 | 0.59 to 0.34 |
+| truck | 407 / 125 | 0.33 to 0.16 | 0.32 to 0.13 |
+| person | 1077 / 460 | 0.30 to 0.21 | 0.33 to 0.25 |
+| traffic light | 1045 / 864 | 0.21 to 0.06 | 0.19 to 0.10 |
+
+- Cars lose the most in absolute points and are about 74% of labeled night objects, so the overall night gap is mostly a car gap.
+- Night traffic lights are weakly detected (0.06 in yolo26n at 0.25), but at conf 0.10 yolo26n reaches 0.20, with many false alarms.
+- Bus, bicycle and motorcycle have 17 to 38 labeled objects at night and are too few to read.
+- yolov8n's lower precision comes mostly from extra false-alarm cars (daytime) and traffic lights (night).
+
+## 4. Object size does not explain it
+600 images (300 per time of day). Median labeled box height is 44 px by day and 45 px by night.
+
+| Cars, box height | n day / night | yolo26n day to night | yolov8n day to night |
+|---|---|---|---|
+| 20-40 px | 1026 / 867 | 0.29 to 0.08 | 0.32 to 0.06 |
+| 40-80 px | 748 / 712 | 0.63 to 0.33 | 0.68 to 0.34 |
+| 80+ px | 672 / 574 | 0.87 to 0.68 | 0.87 to 0.71 |
+
+- Night recall is lower in every size band. Relative loss grows as objects get smaller.
+
+## 5. What the misses are (large cars, 80+ px, night)
+Percent of labeled large night cars, conf 0.25 (detections down to 0.05 inspected).
+
+| Outcome | yolo26n | yolov8n |
+|---|---|---|
+| hit | 68 | 71 |
+| low-conf | 18 | 14 |
+| poor-box | 10 | 10 |
+| wrong-class | 2 | 1 |
+| nothing | 2 | 4 |
+| claimed | 0 | 0 |
+
+- low-conf: a same-class detection with IoU >= 0.5 and confidence between 0.05 and 0.25.
+- poor-box: a detection overlapping the label with IoU 0.1 to 0.5 (not necessarily the same car).
+- nothing: no detection at IoU >= 0.1. This is about 2 to 4% of large night cars.
+- Daytime large cars: 87% hit, with misses mostly wrong-class (4 to 6%).
+- Most night misses are objects the model locates weakly, not objects it never sees.
+
+## 6. Box fit is not the cause (yolo26n only)
+Recall at IoU 0.3 / 0.5 / 0.7: all classes day 0.48 / 0.46 / 0.39, night 0.30 / 0.27 / 0.20. Cars: day 0.58 / 0.55 / 0.48, night 0.35 / 0.32 / 0.24. The day-night gap is the same size at all three thresholds (18 to 19 points all classes, 23 to 24 points cars). Of matched cars, 75% still match at IoU 0.7 at night against 87% by day.
+
+## 7. About half of the large-car gap is darkness of the label region
+Large cars (80+ px), hit rate by mean gray level inside the label box.
+
+| Brightness | cars day / night | yolo26n day / night | yolov8n day / night |
+|---|---|---|---|
+| 0-15 | 0 / 78 | n/a / 44% | n/a / 44% |
+| 15-30 | 3 / 146 | 67% / 64% | 67% / 75% |
+| 30-50 | 70 / 152 | 94% / 67% | 94% / 68% |
+| 50+ | 599 / 198 | 86% / 80% | 86% / 81% |
+| all | 672 / 574 | 87% / 68% | 87% / 71% |
+
+- 65% of large night cars have a dark label box (gray below 50), against about 11% by day.
+- At matched brightness (50+) the gap is 5 to 7 points. Reweighting night hit rates to the daytime brightness mix gives about 79 to 80% (rough estimate), so about half of the 16 to 19 point gap is brightness mix and 7 to 9 points remain.
+- At 30-50 the gap is still 27 points, so brightness alone does not explain it. Mean gray does not capture blur, noise or contrast.
+- Only the darkest bin is clearly worst in both models.
+- About a fifth of large-night-car misses are confident partial detections (same-class, conf >= 0.25, mostly inside the label, covering at least 20% of it). Counting them as hits narrows the gap to about 12 to 14 points.
+
+## 8. Notes from 13 example crops (yolo26n, not a measurement)
+- Some night labels extend well beyond the visible vehicle, which lowers IoU even when the model finds the car.
+- Wrong-class cases were vans and SUVs labeled "car" and detected as bus or truck (ordinary class ambiguity, not a night effect).
+- A few labeled cars are nearly invisible in the image.
+
+## Not established
+- Why night cars at matched brightness are harder (blur and contrast are untested).
+- Whether night labels are looser than daytime labels (no daytime crops compared yet).
+- Rain at night versus clear at night.
+- Anything about larger models, other datasets or fine-tuned models.
+- Results for yolov8n at other confidence thresholds or IoU thresholds.
