@@ -1,4 +1,4 @@
-# Automotive AI Perception & Reliability Lab
+﻿# Automotive AI Perception & Reliability Lab
 
 Work in progress. A learning and portfolio project that runs a pretrained YOLO
 detector on recorded road images and video and will later evaluate how reliably
@@ -67,7 +67,7 @@ auto-rickshaw. None of the saved frames showed a real airplane or train. The sav
 ## Limitations
 
 - One short clip, not a dataset. No conclusions about general reliability.
-- No ground truth, so no precision, recall or mAP yet.
+- The Phase 1 clip has no ground truth. The BDD100K study in the findings file does, but it covers cars only, 600 images, and no mAP.
 - The model has 80 fixed classes and no auto-rickshaw class.
 - Confidence is the model's own certainty, not accuracy.
 - Higher thresholds remove detections but not necessarily only wrong ones.
@@ -77,3 +77,20 @@ auto-rickshaw. None of the saved frames showed a real airplane or train. The sav
 Not yet decided. The licence terms of the detector library and model weights
 still need to be reviewed before this project is published as a portfolio piece.
 
+
+## Findings: day vs night recall on BDD100K
+
+A study of why small YOLO detectors miss more cars at night. Full write-up with tables: [docs/findings_night_recall.md](docs/findings_night_recall.md). Latency measurements: [docs/latency.md](docs/latency.md).
+
+Setup: 600 BDD100K images (300 day, 300 night), cars only, labeled boxes 20+ px, IoU 0.5, models yolo26n, yolo26s and yolov8s.
+
+- At conf 0.25, YOLO finds about 24 points fewer cars at night than by day, in all three models.
+- For large cars (80+ px), brightness explains most of the gap. For small cars (20-40 px) it does not, and the cause is untested.
+- Lowering conf from 0.25 to 0.05 narrows the gap to about 13 points, but night gets more false positives per image than day (8.71 vs 6.01 for yolo26s).
+- Caveats: BDD labels are incomplete, so false positives are overstated. Images are shared across models, so real uncertainty is wider than the simple estimates.
+
+Scripts (in `scripts/`): `compare_yolo_bdd_blur.py`, `compare_yolo_bdd_size_bright.py`, `compare_yolo_bdd_fp.py`, `measure_latency.py`. Run from the repo root, for example `python scripts\compare_yolo_bdd_fp.py yolo26s.pt 300`.
+
+## Data setup
+
+The BDD100K data is not stored in this repo (it is large and has its own licence, see https://bdd-data.berkeley.edu). The scripts expect it under `data/bdd100k/`, with a `samples.json` file listing each image's path, time-of-day tag, size and labeled boxes. Place your copy there and the scripts will run as written. Results are written to `experiments/results/`.
