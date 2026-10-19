@@ -256,3 +256,15 @@ Not established: the precision cost of low thresholds, and whether yolo26n and y
 - At conf 0.50 night and day precision are equal (94%).
 
 Not established: how many FP are unlabeled real cars, duplicates or non-cars, and whether the night excess differs from day in kind.
+
+## 15. Visual review of false positives (yolo26s, conf 0.10, cars)
+Same 600 images. Automatic split of unmatched car predictions (IoU against all labeled cars): on a labeled car 305 day / 285 night, poor overlap (IoU 0.1 to 0.5) 427 / 738, no label near 301 / 282. Totals 1033 day, 1305 night.
+
+Manual review of random false positives of 40+ px (sorted by eye as A real unlabeled car, B extra or misfit box on a labeled car, C not a car, D unclear): daytime 20 of 25 crops reviewed, A 5, B 9, C 6, D 0; night 22 of 25 reviewed, A 0, B 16, C 3, D 3.
+
+- Five of 20 daytime crops and one of 22 night crops are the filming car's own hood, boxed as a car with no label.
+- The night excess of false positives is mostly poor-overlap boxes on cars that already have labels, so part of the low-confidence night precision penalty comes from IoU 0.5 matching, not from invented cars.
+- Dark crops are hard to judge; some B calls at night could be unlabeled cars. Crops were sorted by one person with the box category hidden, but 20 to 22 crops per side give roughly +/-15 points.
+- Several crops were counted by the reviewer from a partial set (daytime_10, 11, 22, 23, 24 and night_00, 01 were not reviewed).
+
+Not established: the share of hood boxes among all large false positives, and whether the night B boxes would match at a looser IoU.
